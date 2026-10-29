@@ -1,6 +1,6 @@
 // 오프라인에서도 앱이 열리도록 파일을 저장해 두는 서비스 워커.
 // 인터넷이 되면 항상 최신 파일을 먼저 받고, 안 되면 저장해 둔 파일을 쓴다.
-const CACHE = 'geonsu-v1';
+const CACHE = 'geonsu-v2';
 
 self.addEventListener('install', () => self.skipWaiting());
 
