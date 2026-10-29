@@ -1,0 +1,19 @@
+{
+  "id": "./",
+  "name": "작업 건수",
+  "short_name": "건수",
+  "description": "오전·오후 작업 건수와 인센티브 기록",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone"],
+  "orientation": "portrait",
+  "background_color": "#FBF3EE",
+  "theme_color": "#FBF3EE",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
