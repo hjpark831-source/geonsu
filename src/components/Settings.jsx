@@ -3,6 +3,7 @@ import { useStore } from '../store.jsx';
 import { addMonth, pad, won } from '../format.js';
 import { calcPay, METHODS, normalizeRule, ruleFor, ruleSummary, salesOf, sortRules, ymLabel } from '../incentive.js';
 import { Icon, NumField, useMonthInfo } from './ui.jsx';
+import { parseRecords } from '../importText.js';
 
 const FIRST = '2000-01';
 const ymOf = ({ y, m }) => `${y}-${pad(m)}`;
@@ -17,6 +18,53 @@ function Seg({ options, value, onChange }) {
         </button>
       ))}
     </div>
+  );
+}
+
+function ImportBox({ today, showToast }) {
+  const { days, importDays } = useStore();
+  const [text, setText] = useState('');
+  const [busy, setBusy] = useState(false);
+  const { rows, bad } = parseRecords(text, today);
+  const total = rows.reduce((s, r) => s + r.am + r.pm, 0);
+  const overwrite = rows.filter((r) => days[r.key] && (days[r.key].am || days[r.key].pm)).length;
+  const mismatches = rows.filter((r) => r.mismatch);
+
+  const run = async () => {
+    setBusy(true);
+    try {
+      const n = await importDays(rows);
+      setText('');
+      showToast(`${n}일 기록을 넣었어요`);
+    } catch {
+      showToast('넣지 못했어요. 다시 시도해 주세요.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <section className="card group" aria-labelledby="h-import">
+      <h2 id="h-import">기록 한 번에 넣기</h2>
+      <p className="note">메모에 적어 둔 기록을 붙여 넣으세요. 한 줄에 하루씩, 예: 10/1 22 + 21 = 43 (숫자가 하나면 오전으로 넣어요)</p>
+      <label htmlFor="import-text" className="sr-only">붙여 넣을 기록</label>
+      <textarea id="import-text" className="import" rows={6} value={text} placeholder={'10/1 22 + 21 = 43\n10/3 23'} onChange={(e) => setText(e.target.value)} />
+      {text.trim() && (
+        <>
+          <p className="note">
+            {`${rows.length}일 읽었어요 · 합계 ${won(total)}건`}
+            {overwrite ? ` · 이미 있는 ${overwrite}일은 새 값으로 바뀌어요` : ''}
+          </p>
+          {mismatches.length > 0 && (
+            <p className="note warn">{`합계가 안 맞는 줄: ${mismatches.map((r) => `${r.m}/${r.d}`).join(', ')} (오전+오후 숫자로 넣어요)`}</p>
+          )}
+          {bad.length > 0 && <p className="note warn">{`읽지 못한 줄: ${bad.slice(0, 5).join(' / ')}${bad.length > 5 ? ' …' : ''}`}</p>}
+          <button type="button" className="primary" disabled={!rows.length || busy} onClick={run}>
+            {busy ? '넣는 중' : `${rows.length}일 기록 넣기`}
+          </button>
+        </>
+      )}
+    </section>
   );
 }
 
@@ -275,6 +323,8 @@ export default function Settings({ today, onClose, showToast }) {
           </div>
         </div>
       </section>
+
+      <ImportBox today={today} showToast={showToast} />
 
       <section className="group" aria-labelledby="h-backup">
         <h2 id="h-backup">백업</h2>

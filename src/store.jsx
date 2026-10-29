@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { getAll, put } from './db.js';
+import { getAll, put, putMany } from './db.js';
 import { isConfigured, lastSyncedAt, signIn, signOutUser, syncNow, watchUser } from './sync.js';
 import { clampCount } from './format.js';
 import { DEFAULT_RULE, sortRules } from './incentive.js';
@@ -107,6 +107,23 @@ export function StoreProvider({ children }) {
     [scheduleSync],
   );
 
+  // 여러 날을 한 번에 넣기 (같은 날짜가 있으면 새 값으로 바꾼다)
+  const importDays = useCallback(
+    async (rows) => {
+      const now = Date.now();
+      const recs = rows.map((r) => ({ id: r.key, am: clampCount(r.am), pm: clampCount(r.pm), updatedAt: now }));
+      await putMany('days', recs);
+      setDays((d) => {
+        const next = { ...d };
+        for (const r of recs) next[r.id] = r;
+        return next;
+      });
+      scheduleSync();
+      return recs.length;
+    },
+    [scheduleSync],
+  );
+
   const setMonthSales = useCallback(
     (ym, sales) => {
       const rec = { id: ym, sales: Math.max(0, Math.floor(Number(sales) || 0)), updatedAt: Date.now() };
@@ -143,8 +160,8 @@ export function StoreProvider({ children }) {
   }, []);
 
   const value = useMemo(
-    () => ({ status, days, months, rules, cloud, setCount, setMonthSales, saveRules, connectGoogle, disconnectGoogle, syncNow: runSync }),
-    [status, days, months, rules, cloud, setCount, setMonthSales, saveRules, connectGoogle, disconnectGoogle, runSync],
+    () => ({ status, days, months, rules, cloud, setCount, importDays, setMonthSales, saveRules, connectGoogle, disconnectGoogle, syncNow: runSync }),
+    [status, days, months, rules, cloud, setCount, importDays, setMonthSales, saveRules, connectGoogle, disconnectGoogle, runSync],
   );
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
