@@ -1,7 +1,7 @@
 {
   "id": "/geonsu/",
-  "name": "작업 건수",
-  "short_name": "건수",
+  "name": "인센티브",
+  "short_name": "인센티브",
   "description": "오전·오후 작업 건수와 인센티브 기록",
   "lang": "ko",
   "start_url": "./",
